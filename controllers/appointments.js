@@ -13,10 +13,18 @@ exports.getAppointments=async (req, res,next)=>{
             select:'name province tel'
         });
     }else{ //If you are an admin, you can see all!
-        query=Appointment.find().populate({
-            path:'hospital',
-            select:'name province tel'
-        });
+        if(req.params.hospitalId){
+            console.log(req.params.hospitalId);
+            query=Appointment.find({hospital:req.params.hospitalId}).populate({
+                path:'hospital',
+                select:'name province tel'
+            });
+        }else{
+            query=Appointment.find().populate({
+                path:'hospital',
+                select:'name province tel'
+            });
+        }
     }
     try {
         const appointments= await query;
@@ -93,7 +101,7 @@ exports.addAppointment=async (req,res,next)=>{
 exports.updateAppointment=async (req,res,next)=>{
     try{
         let appointment=await Appointment.findById(req.params.id);
-        if(!hospital){
+        if(!appointment){
             return res.status(404).json({success:false, message:`No hospital with the id of ${req.params.hospitalId}`});
         }
 
@@ -102,7 +110,7 @@ exports.updateAppointment=async (req,res,next)=>{
             return res.status(401).json({success:false,message:`User ${req.user.id} is not authorized to update this appointment`});
         }
 
-        appointment = await Appointment.findByIdAndDelete(req.params.id,req.body,{
+        appointment = await Appointment.findByIdAndUpdate(req.params.id,req.body,{
             new:true,
             runValidators:true
         });
